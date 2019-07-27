@@ -1,70 +1,56 @@
 <template>
   <div id="app">
-    <h1>Pirkinių sąrašas</h1>
-    <div class="forma">
-      <input type="text" class="form-input" v-model="naujasPirkinys" placeholder="Įtraukite pirkinį">
-      <p class="to-right"><button type="submit" class="btn ripple" @click="itrauktiPirkini"><i class="fas fa-plus"></i></button></p>    
+    <div class="flex">
+      <button
+        class="perjungimas"
+        v-on:click="setActive('nauji')"
+        :class="{ rodoma: isActive('nauji') }"
+      >NAUJI PIRKINIAI</button>
+      <button
+        class="perjungimas"
+        v-on:click="setActive('ankstesni')"
+        :class="{ rodoma: isActive('ankstesni') }"
+      >ANKSTESNI PIRKINIAI</button>
     </div>
-    <table class="table" >
-      <thead>
-        <tr class="iprastas-fonas">
-          <th>Data</th>
-          <th>Pirkinys</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(item, key) in pirkiniai" :key="key">
-          <td class="ivedimo-data">{{item.data | data}}</td>
-          <td>{{item.pirkinys}}</td>
-          <td class="nupirkta"><button type="submit" class="btn nupirkta-btn ripple" @click="nupirktas(item['.key'])"><i class="fas fa-check"></i></button></td>
-        </tr>
-      </tbody>
-    </table>
+
+    <DabartiniaiPirkiniai v-show="activeItem=='nauji'" :isActive="isActive" />
+    <PaskutiniaiPirkiniai :isActive="isActive" :paskutiniaiPirkiniai="paskutiniaiPirkiniai" />
   </div>
 </template>
 
 <script>
+import DabartiniaiPirkiniai from "./components/DabartiniaiPirkiniai.vue";
+import PaskutiniaiPirkiniai from "./components/PaskutiniaiPirkiniai.vue";
 import { db } from "./firebase";
 
 export default {
   name: "app",
   data() {
     return {
-      naujasPirkinys: "",
-      pirkiniuSarasas: ""
+      activeItem: "nauji"
     };
   },
-
-  firebase: {
-    pirkiniai: {
-      source: db
-        .ref("/pirkiniai")
-        .orderByChild("nupirkta")
-        .equalTo(false),
-      asObject: false,
-      cancelCallback(err) {
-        console.error(err);
-      }
+  components: {
+    DabartiniaiPirkiniai,
+    PaskutiniaiPirkiniai
+  },
+  methods: {
+    isActive(menuItem) {
+      return this.activeItem === menuItem;
+    },
+    setActive(menuItem) {
+      this.activeItem = menuItem;
     }
   },
-
-  methods: {
-    itrauktiPirkini() {
-      db.ref("pirkiniai").push({
-        data: new Date().toISOString(),
-        pirkinys: this.naujasPirkinys,
-        nupirkta: false
-      });
-      this.naujasPirkinys = "";
-    },
-    nupirktas(key) {
-      db.ref("pirkiniai/" + key).update({ nupirkta: true });
-    }
+  firebase: {
+    paskutiniaiPirkiniai: db
+      .ref("/pirkiniai")
+      .orderByChild("nupirkta")
+      .equalTo(true)
+      .limitToLast(10)
   }
 };
 </script>
-
 
 <style>
 body {
@@ -98,7 +84,7 @@ tr:nth-child(even) {
 
 .btn {
   border: 1px solid #363537;
-  border-radius: 50%;
+  border-radius: 5%;
   width: 10%;
   font-size: 1.5rem;
   background-color: #2fbf71;
@@ -107,7 +93,6 @@ tr:nth-child(even) {
 
 .forma {
   border: 1px solid#363537;
-  border-right: none;
   border-radius: 5px;
   background-color: #ecffdb;
 }
@@ -128,10 +113,30 @@ tr:nth-child(even) {
   width: 2.5rem;
   height: 2.5rem;
 }
-.to-right {
+
+.flex {
+  display: flex;
+}
+.perjungimas {
+  width: 50%;
+  font-size: 1.5rem;
+  font-family: Roboto;
+  color: #e2e093;
+  background-color: #363537;
+  border: none;
   margin: 0;
   padding: 0;
-  display: inline;
+  outline: 0;
+  cursor: pointer;
+  min-height: 4rem;
+  text-align: center;
+  align-items: center;
+}
+
+.rodoma {
+  border: 1px solid #363537;
+  color: #363537;
+  background-color: ghostwhite;
 }
 
 .ripple {
@@ -148,6 +153,17 @@ tr:nth-child(even) {
   transition: background 0s;
 }
 
+.opacity {
+  opacity: 0.2;
+  visibility: hidden;
+  transition: opacity 1.5s linear;
+}
+
+.matomi {
+  visibility: visible;
+  opacity: 1;
+}
+
 @media only screen and (min-width: 600px) {
   #app {
     padding: 0 5rem;
@@ -155,18 +171,13 @@ tr:nth-child(even) {
   .btn {
     height: 2.5rem;
     width: 2.5rem;
+    float: right;
   }
   .nupirkta {
     text-align: right;
   }
-  .to-right {
-    text-align: right;
-  }
-  .to-right {
-    width: 10%;
-    margin: 0;
-    padding: 0;
-    display: inline-block;
+  .forma {
+    height: 2.5rem;
   }
 }
 </style>

@@ -3,12 +3,12 @@ import App from './App.vue'
 import {
   fb
 } from './firebase'
-import VueFire from 'vuefire'
+import {rtdbPlugin} from 'vuefire'
 import DateFilter from '../filters/dateFromatter'
 
 Vue.config.productionTip = false
 
-Vue.use(VueFire)
+Vue.use(rtdbPlugin)
 Vue.filter('data', DateFilter)
 
 new Vue({
